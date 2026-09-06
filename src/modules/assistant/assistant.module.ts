@@ -3,9 +3,10 @@ import { AssistantController } from './assistant.controller';
 import { AssistantService } from './assistant.service';
 import { HttpModule } from '@nestjs/axios';
 import { RedisModule } from 'src/common/redis/redis.module';
+import { ModelProviderModule } from '../model-provider/model-provider.module';
 
 @Module({
-  imports: [HttpModule, RedisModule],
+  imports: [RedisModule, ModelProviderModule],
   controllers: [AssistantController],
   providers: [AssistantService],
 })
