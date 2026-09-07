@@ -3,7 +3,6 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { ModelProvider } from './model-provider.interface';
-import { options } from 'axios';
 
 @Injectable()
 export class OllamaProvider implements ModelProvider {

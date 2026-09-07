@@ -1,0 +1,25 @@
+name: chat-alpha-assistant
+
+services:
+  postgres-assistant:
+    image: postgres:16
+    container_name: chat-alpha-assistant-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chat_alpha_assistant
+    ports:
+      - '5436:5432'
+    volumes:
+      - assistant_pgdata:/var/lib/postgresql/data
+    networks:
+      - chat-alpha-network
+
+volumes:
+  assistant_pgdata:
+    name: chat-alpha-assistant_pgdata
+
+networks:
+  chat-alpha-network:
+    external: true

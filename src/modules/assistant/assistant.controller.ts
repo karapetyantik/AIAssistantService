@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { JwtAuthGuard } from 'src/common/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '@common/auth/jwt-auth.guard';
 import { AssistantService } from './assistant.service';
 import { SuggestReplyDto } from './dto/suggest-reply.dto';
 

@@ -5,8 +5,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { SuggestReplyDto } from './dto/suggest-reply.dto';
-import { RedisService } from 'src/common/redis/redis.service';
-import type { ModelProvider } from '../model-provider/model-provider.interface';
+import { RedisService } from '@common/redis/redis.service';
+import type { ModelProvider } from '@modules/model-provider/model-provider.interface';
 
 interface AssistantContext {
   participantName?: string;
