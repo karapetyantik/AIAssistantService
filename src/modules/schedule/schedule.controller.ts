@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@common/auth/jwt-auth.guard';
+import { AuthenticatedRequest } from '@common/auth/authenticated-request.interface';
 import { ScheduleService } from './schedule.service';
 import { ScheduleMessageDto } from './dto/schedule-message.dto';
 
@@ -18,17 +19,17 @@ export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Post()
-  schedule(@Req() req: any, @Body() dto: ScheduleMessageDto) {
+  schedule(@Req() req: AuthenticatedRequest, @Body() dto: ScheduleMessageDto) {
     return this.scheduleService.scheduleMessage(req.user.userId, dto);
   }
 
   @Get()
-  list(@Req() req: any) {
+  list(@Req() req: AuthenticatedRequest) {
     return this.scheduleService.listScheduled(req.user.userId);
   }
 
   @Delete(':id')
-  cancel(@Req() req: any, @Param('id') id: string) {
+  cancel(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.scheduleService.cancelScheduled(req.user.userId, id);
   }
 }

@@ -36,11 +36,12 @@ export class AssistantService {
     dto: SuggestReplyDto,
     context: AssistantContext,
   ): { systemPrompt: string; userPrompt: string } {
+    const toneInstructions: Partial<Record<string, string>> = {
+      casual: 'в неформальном, дружелюбном стиле',
+      formal: 'в официальном, вежливом стиле',
+    };
     const toneInstruction =
-      {
-        casual: 'в неформальном, дружелюбном стиле',
-        formal: 'в официальном, вежливом стиле',
-      }[dto.tone ?? 'casual'] ?? 'в обыденном стиле';
+      toneInstructions[dto.tone ?? 'casual'] ?? 'в обыденном стиле';
 
     const participantName = context.participantName ?? 'Собеседник';
     const lastMessage = dto.messages[dto.messages.length - 1];
@@ -103,32 +104,36 @@ export class AssistantService {
     }
 
     const cached = await this.redisService.client.get(cacheKey);
-    return cached ? JSON.parse(cached) : {};
+    return cached ? (JSON.parse(cached) as AssistantContext) : {};
   }
 
   private parseSuggestions(raw: string): string[] {
     const cleanedRaw = raw.replace(/```json\n?|```/g, '').trim();
 
     try {
-      const parsed = JSON.parse(cleanedRaw);
+      const parsed: unknown = JSON.parse(cleanedRaw);
       const extracted = this.extractArrayFromJson(parsed);
       if (extracted) return extracted;
-    } catch {}
+    } catch (error) {
+      this.logger.debug(`Ответ модели не является валидным JSON: ${error}`);
+    }
 
     const arrayMatch = cleanedRaw.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
       try {
-        const parsed = JSON.parse(arrayMatch[0]);
+        const parsed: unknown = JSON.parse(arrayMatch[0]);
         const extracted = this.extractArrayFromJson(parsed);
         if (extracted) return extracted;
-      } catch {}
+      } catch (error) {
+        this.logger.debug(`Не удалось разобрать JSON-фрагмент: ${error}`);
+      }
     }
 
     const lines = cleanedRaw
       .split('\n')
       .map((line) =>
         line
-          .replace(/^[\d.\-\*\)\s"]+/, '')
+          .replace(/^[\d.\-*)\s"]+/, '')
           .replace(/["\s]+$/, '')
           .trim(),
       )
@@ -174,7 +179,7 @@ export class AssistantService {
         (v) => Array.isArray(v) && v.every((item) => typeof item === 'string'),
       );
       if (arrayValue) {
-        return (arrayValue as string[]).map((s) => s.trim()).slice(0, 3);
+        return arrayValue.map((s) => s.trim()).slice(0, 3);
       }
     }
 

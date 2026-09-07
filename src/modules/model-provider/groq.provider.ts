@@ -1,15 +1,18 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Groq from 'groq-sdk';
-import { ModelProvider } from './model-provider.interface';
+import { BaseModelProvider } from './base-model.provider';
+import { GenerateOptions } from './model-provider.interface';
 
 @Injectable()
-export class GroqProvider implements ModelProvider {
-  private readonly logger = new Logger(GroqProvider.name);
+export class GroqProvider extends BaseModelProvider {
+  protected readonly logger = new Logger(GroqProvider.name);
+  protected readonly providerName = 'Groq';
   private readonly client: Groq;
   private readonly model: string;
 
   constructor(private readonly configService: ConfigService) {
+    super();
     this.client = new Groq({
       apiKey: this.configService.getOrThrow<string>('GROQ_API_KEY'),
     });
@@ -19,23 +22,25 @@ export class GroqProvider implements ModelProvider {
     );
   }
 
-  async generate(systemPrompt: string, userPrompt: string): Promise<string> {
-    try {
-      const completion = await this.client.chat.completions.create({
+  protected async doGenerate(
+    systemPrompt: string,
+    userPrompt: string,
+    options: Required<GenerateOptions>,
+  ): Promise<string> {
+    const completion = await this.client.chat.completions.create(
+      {
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 150,
-      });
+        temperature: options.temperature,
+        max_tokens: options.maxTokens,
+      },
+      { timeout: options.timeoutMs },
+    );
 
-      return completion.choices[0]?.message?.content ?? '';
-    } catch (error) {
-      this.logger.error(`Groq API вернул ошибку: ${error}`);
-      throw new BadRequestException('Сервис подсказок временно недоступен');
-    }
+    return completion.choices[0]?.message?.content ?? '';
   }
 }

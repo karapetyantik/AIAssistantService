@@ -14,6 +14,7 @@ class ContextMessageDto {
   role!: 'me' | 'other';
 
   @IsString()
+  @MaxLength(4000)
   content!: string;
 }
 

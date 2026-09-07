@@ -1,10 +1,12 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import {
   ChatInternalService,
   SendMessageInternalResponse,
 } from './chat-grpc-client.interface';
+import { buildInternalGrpcMetadata } from './internal-grpc-metadata';
 
 @Injectable()
 export class ChatGrpcClientService implements OnModuleInit {
@@ -12,6 +14,7 @@ export class ChatGrpcClientService implements OnModuleInit {
 
   constructor(
     @Inject('CHAT_GRPC_PACKAGE') private readonly client: ClientGrpc,
+    private readonly config: ConfigService,
   ) {}
 
   onModuleInit() {
@@ -25,11 +28,23 @@ export class ChatGrpcClientService implements OnModuleInit {
     content: string,
   ): Promise<SendMessageInternalResponse> {
     return firstValueFrom(
-      this.chatInternalService.sendMessageInternal({
-        chatId,
-        senderId,
-        content,
-      }),
+      this.chatInternalService.sendMessageInternal(
+        { chatId, senderId, content },
+        this.metadata(),
+      ),
+    );
+  }
+
+  async isMember(chatId: string, userId: string): Promise<boolean> {
+    const response = await firstValueFrom(
+      this.chatInternalService.isMember({ chatId, userId }, this.metadata()),
+    );
+    return response.isMember;
+  }
+
+  private metadata() {
+    return buildInternalGrpcMetadata(
+      this.config.getOrThrow<string>('INTERNAL_API_KEY'),
     );
   }
 }
